@@ -5,7 +5,7 @@
 //! preferred so the whole app can ride along on a USB stick and never litters
 //! the user profile. When the executable lives somewhere read-only (a
 //! system-wide install under Program Files / `/usr`), it falls back to the
-//! per-user OS config dir (e.g. `%APPDATA%/meatshell`, `~/.config/meatshell`),
+//! per-user OS config dir (e.g. `%APPDATA%/FastShell`, `~/.config/FastShell`),
 //! which is also where every pre-0.4.15 version stored its data — so existing
 //! installs keep working untouched. See [`data_dir`].
 //!
@@ -57,9 +57,9 @@ pub fn data_dir() -> PathBuf {
 }
 
 /// Pre-0.4.15 location: the per-user OS config dir
-/// (`%APPDATA%/meatshell`, `~/.config/meatshell`, …).
+/// (`%APPDATA%/FastShell`, `~/.config/FastShell`, …).
 fn legacy_data_dir() -> Option<PathBuf> {
-    ProjectDirs::from("dev", "meatshell", "meatshell")
+    ProjectDirs::from("dev", "FastShell", "FastShell")
         .map(|d| d.config_dir().to_path_buf())
 }
 
@@ -104,7 +104,7 @@ fn resolve_data_dir() -> PathBuf {
 
     // Fall back to the legacy per-user dir (also the pre-0.4.15 location). Last
     // resort: a temp dir, so the app still launches if neither is available.
-    let dir = legacy.unwrap_or_else(|| std::env::temp_dir().join("meatshell"));
+    let dir = legacy.unwrap_or_else(|| std::env::temp_dir().join("FastShell"));
     let _ = fs::create_dir_all(&dir);
     dir
 }
@@ -496,7 +496,7 @@ pub struct ConfigFile {
 
 /// Portable export file (issue #46): sessions with everything in plaintext
 /// **except** the password, which is encrypted with a fixed key baked into the
-/// binary so the file opens on *any* machine running meatshell.
+/// binary so the file opens on *any* machine running FastShell.
 ///
 /// Security note: a built-in key in open-source code is **obfuscation, not real
 /// security** — anyone with the source can derive it. It only stops a casual
@@ -504,7 +504,7 @@ pub struct ConfigFile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ExportFile {
     /// Format marker / version so the schema can evolve later.
-    meatshell_export: u32,
+    FastShell_export: u32,
     sessions: Vec<Session>,
 }
 
@@ -539,7 +539,7 @@ impl ConfigStore {
 
     /// Fixed 32-byte key for portable exports. Baked into the binary so an
     /// exported file decrypts on any machine. Obfuscation only — see `ExportFile`.
-    const EXPORT_KEY: [u8; 32] = *b"meatshell.export.portable.key.01";
+    const EXPORT_KEY: [u8; 32] = *b"FastShell.export.portable.key.01";
 
     // ── Encryption helpers ────────────────────────────────────────────────
 
@@ -1091,7 +1091,7 @@ impl ConfigStore {
     /// file is human-readable and editable. Returns the number of sessions.
     pub fn export_to(&self, path: &Path) -> Result<usize> {
         let mut out = ExportFile {
-            meatshell_export: 1,
+            FastShell_export: 1,
             sessions: self.cache.sessions.clone(),
         };
         for s in &mut out.sessions {
@@ -1115,7 +1115,7 @@ impl ConfigStore {
         let raw = fs::read_to_string(path)
             .with_context(|| format!("failed to read {}", path.display()))?;
         let file: ExportFile = serde_json::from_str(&raw)
-            .context("not a valid meatshell export file")?;
+            .context("not a valid FastShell export file")?;
 
         let mut added = 0usize;
         let mut skipped = 0usize;
